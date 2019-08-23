@@ -29,10 +29,12 @@ class FortniteClient {
   }
 
   /**
+   * Gets Status
    *
-   *
-   * @param {string} user
+   * @param {string} user - The InGameName of the user
+   * @returns {Promise<IFortniteStatusResponse>} FortniteStatusResponse
    * @memberof FortniteClient
+   * @beta
    */
   public async getStats(user: string) {
     const res = await fetch(`${this.BaseURL}${user}`, {
@@ -46,54 +48,114 @@ class FortniteClient {
     const $ = cheerio.load(res);
 
     // @ts-ignore Cuz Im assigning em in sort function
-    const response: IFortniteStatusResponse = {};
-    const io =await this.sort($, response);
-    console.log(io);
-  }
+    const response: IFortniteStatusResponse = {
+      matchesPlayed: "",
+      totalScore: "",
+      scorePerMatch: "",
+      totalKills: "",
+      totalDeaths: "",
+      killsPerMatch: "",
+      killsPerDeath: "",
+      victories: "",
+      silverPlacements: "",
+      bronzePlacements: "",
 
-  private sort($: CheerioStatic, response: IFortniteStatusResponse) {
-    $("table").each((index: number, value: any) => {
-      if (index === 0) {
-        const $1 = cheerio.load($(value).html() as string);
-        $1("tbody tr").each((i: number, v: any) => {
-          if (i === 0) {
-            $(v + " td").each((ind: number, val: any) => {
-              if (ind !== 0) {
-                if (ind === 1) {
-                  response.modes.all.matches = ($(val).html() as string)
-                    .replace(/<small.*<\/small>/gi, "")
-                    .replace("<!-- -->", "")
-                    .trim();
-                } else if (ind === 2) {
-                  response.modes.all.victory = ($(val).html() as string)
-                    .replace(/<small.*<\/small>/gi, "")
-                    .replace("<!-- -->", "")
-                    .trim();
-                } else if (ind === 3) {
-                  response.modes.all.silver = ($(val).html() as string)
-                    .replace(/<small.*<\/small>/gi, "")
-                    .replace("<!-- -->", "")
-                    .trim();
-                } else if (ind === 4) {
-                  response.modes.all.bronze = ($(val).html() as string)
-                    .replace(/<small.*<\/small>/gi, "")
-                    .replace("<!-- -->", "")
-                    .trim();
+      modes: {
+        all: {
+          matches: "",
+          victory: "",
+          silver: "",
+          bronze: "",
+        },
 
-                  return response;
-                }
-              }
-            });
-          }
-        });
-      } else if (index === 1) {
-        const $2 = cheerio.load($(value).html() as string);
-      }
+        solo: {
+          matches: "",
+          victory: "",
+          silver: "",
+          bronze: "",
+        },
+
+        duo: {
+          matches: "",
+          victory: "",
+          silver: "",
+          bronze: "",
+        },
+
+        squad: {
+          matches: "",
+          victory: "",
+          silver: "",
+          bronze: "",
+        },
+      },
+    };
+
+    // console.log(tables)
+    // const promises: any[] = [];
+    return this.sort($, response, (i: IFortniteStatusResponse) => {
+      console.log(1)
+      return (i)
     });
 
-    // return response;
+    // console.log(response);
+    // man u dont have multiple promises why will u use promise.all ?
+    // what is not returning ?
+    // you are submiting a form with this ?
+    // so what is not working man i am not understanding
+    // so listen i want it to fill in the response from documents
+    // like see
+    // it will put data in the page source ?#
+    // no in the response object
+    // yeah thats what i melai
+    // line 51
+    // reponse is an object that i will return from function
+    // and then what ?
+    // discord
+    // response.modes.all.bronze = ($(val).html() as string)
+    // .replace(/<small.*<\/small>/gi, "")
+    // .replace("<!-- -->", "")
+    // .trim();
+
+    // no
+    // getting page
+    // i need it to write response
+  }
+
+  private sort(
+    $: CheerioStatic,
+    response: IFortniteStatusResponse, callback: any
+  ) {
+    $("table").map((index: number, value: any) => {
+      if ($(value).hasClass("Table")) {
+        return $(value).map((ind: number, val: any) => {
+          if (ind === 1) {
+            response.modes.all.matches = ($(val).html() as string)
+              .replace(/<small.*<\/small>/gi, "")
+              .replace("<!-- -->", "")
+              .trim();
+          } else if (ind === 2) {
+            response.modes.all.victory = ($(val).html() as string)
+              .replace(/<small.*<\/small>/gi, "")
+              .replace("<!-- -->", "")
+              .trim();
+          } else if (ind === 3) {
+            response.modes.all.silver = ($(val).html() as string)
+              .replace(/<small.*<\/small>/gi, "")
+              .replace("<!-- -->", "")
+              .trim();
+          } else if (ind === 4) {
+            response.modes.all.bronze = ($(val).html() as string)
+              .replace(/<small.*<\/small>/gi, "")
+              .replace("<!-- -->", "")
+              .trim();
+          }
+        });
+      }
+      return callback(response)
+    });
   }
 }
 
 const o = new FortniteClient();
-o.getStats("ionagamer");
+o.getStats("ionagamer").then((i) => console.log(i));
