@@ -17,7 +17,7 @@
     "url": "https://github.com/officialpiyush/gametracker.js/issues"
   },
   "scripts": {
-    "docs": "typedoc",
+    "docs": "typedoc --excludeNotExported --mode file --out ./docs/ ./src/",
     "test": "tslint -p tsconfig.json",
     "build": "tsc"
   },
