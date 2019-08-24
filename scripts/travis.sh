@@ -26,6 +26,8 @@ npm run docs
 rsync -a docs/ out/
 
 cd out
+touch CNAME
+echo "gametracker.js.org" >> CNAME
 git add --all .
 git config user.name "PiyushBot"
 git config user.email "${CM}"
