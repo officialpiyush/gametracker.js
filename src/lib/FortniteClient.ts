@@ -19,13 +19,56 @@
 
 import * as cheerio from "cheerio";
 import fetch from "node-fetch";
+import InvalidFortniteUser from "./utils/errors/InvalidFortniteUser";
 import { IFortniteStatusResponse } from "./utils/types";
 
-class FortniteClient {
+/**
+ * @class
+ * @since 0.1.0
+ */
+export default class FortniteClient {
   private BaseURL: string;
+  private sArray: number[];
 
   public constructor() {
     this.BaseURL = "https://www.fortbuff.com/players/";
+    this.sArray = [
+      0,
+      2,
+      3,
+      5,
+      6,
+      8,
+      9,
+      11,
+      12,
+      14,
+      15,
+      17,
+      18,
+      20,
+      21,
+      23,
+      24,
+      26,
+      27,
+      29,
+    ];
+  }
+
+  /**
+   * Checks if an user exists
+   *
+   * @param name {string} - InGamename
+   * @returns {Promise<boolean} - Whether the player exists or not
+   */
+  public async userExists(name: string): Promise<boolean> {
+    const res = await fetch(`https://www.fortbuff.com/vault/players/${name}`);
+    if (res.status === 404) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -34,128 +77,150 @@ class FortniteClient {
    * @param {string} user - The InGameName of the user
    * @returns {Promise<IFortniteStatusResponse>} FortniteStatusResponse
    * @memberof FortniteClient
-   * @beta
+   * @throws {InvalidFortniteUser} - The InGameName supplied was not found!
    */
-  public async getStats(user: string) {
-    const res = await fetch(`${this.BaseURL}${user}`, {
-      headers: {
-        "Origin": "fortbuff.com",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-      },
-    }).then((r) => r.text());
+  public async getStats(user: string): Promise<IFortniteStatusResponse> {
+    const isUser = await this.userExists(user);
+    if (!isUser) {
+      throw new InvalidFortniteUser(user);
+    } else {
+      const res = await fetch(`${this.BaseURL}${user}`, {
+        headers: {
+          "Origin": "fortbuff.com",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+        },
+      }).then((r) => r.text());
 
-    const $ = cheerio.load(res);
+      const $ = cheerio.load(res);
 
-    // @ts-ignore Cuz Im assigning em in sort function
-    const response: IFortniteStatusResponse = {
-      matchesPlayed: "",
-      totalScore: "",
-      scorePerMatch: "",
-      totalKills: "",
-      totalDeaths: "",
-      killsPerMatch: "",
-      killsPerDeath: "",
-      victories: "",
-      silverPlacements: "",
-      bronzePlacements: "",
-
-      modes: {
-        all: {
-          matches: "",
-          victory: "",
-          silver: "",
-          bronze: "",
+      const response: IFortniteStatusResponse = {
+        name: user,
+        matchesPlayed: "",
+        totalScore: "",
+        averageScore: "",
+        totalKills: "",
+        totalDeaths: "",
+        killsPerMatch: "",
+        killsPerDeath: "",
+        victories: "",
+        silverPlacements: "",
+        bronzePlacements: "",
+        lastPlayed: {
+          readableTime: "",
+          timestamp: "",
         },
 
-        solo: {
-          matches: "",
-          victory: "",
-          silver: "",
-          bronze: "",
+        modes: {
+          all: {
+            matches: "",
+            victory: "",
+            silver: "",
+            bronze: "",
+          },
+
+          solo: {
+            matches: "",
+            victory: "",
+            silver: "",
+            bronze: "",
+          },
+
+          duo: {
+            matches: "",
+            victory: "",
+            silver: "",
+            bronze: "",
+          },
+
+          squad: {
+            matches: "",
+            victory: "",
+            silver: "",
+            bronze: "",
+          },
         },
+      };
+      const timeTag = $("time").first();
+      response.lastPlayed.timestamp = timeTag.attr("datetime");
+      response.lastPlayed.readableTime = $(timeTag).text();
 
-        duo: {
-          matches: "",
-          victory: "",
-          silver: "",
-          bronze: "",
-        },
+      let i: number = 0;
+      const tables = $("table").get();
+      const table1 = $(tables[0])
+        .find("td")
+        .get();
 
-        squad: {
-          matches: "",
-          victory: "",
-          silver: "",
-          bronze: "",
-        },
-      },
-    };
+      for (i = 0; i < table1.length; i++) {
+        if ([0, 5, 10, 15].includes(i)) {
+          continue;
+        } else if ([1, 6, 11, 16].includes(i)) {
+          response.modes[this._getMode(i)].matches = $(table1[i]).text();
+        } else if ([2, 7, 12, 17].includes(i)) {
+          response.modes[this._getMode(i)].victory = $(table1[i]).text();
+        } else if ([3, 8, 13, 18].includes(i)) {
+          response.modes[this._getMode(i)].silver = $(table1[i]).text();
+        } else if ([4, 9, 14, 19].includes(i)) {
+          response.modes[this._getMode(i)].bronze = $(table1[i]).text();
+        }
+      }
 
-    // console.log(tables)
-    // const promises: any[] = [];
-    return this.sort($, response, (i: IFortniteStatusResponse) => {
-      console.log(1)
-      return (i)
-    });
+      const table2 = $(tables[1])
+        .find("td")
+        .get();
 
-    // console.log(response);
-    // man u dont have multiple promises why will u use promise.all ?
-    // what is not returning ?
-    // you are submiting a form with this ?
-    // so what is not working man i am not understanding
-    // so listen i want it to fill in the response from documents
-    // like see
-    // it will put data in the page source ?#
-    // no in the response object
-    // yeah thats what i melai
-    // line 51
-    // reponse is an object that i will return from function
-    // and then what ?
-    // discord
-    // response.modes.all.bronze = ($(val).html() as string)
-    // .replace(/<small.*<\/small>/gi, "")
-    // .replace("<!-- -->", "")
-    // .trim();
-
-    // no
-    // getting page
-    // i need it to write response
+      // tslint:disable: no-unused-expression
+      for (i = 0; i < table2.length; i++) {
+        if (this.sArray.includes(i)) {
+          continue;
+        } else {
+          i === 1 ? (response.matchesPlayed = $(table2[i]).text()) : null;
+          i === 4 ? (response.totalScore = $(table2[i]).text()) : null;
+          i === 7 ? (response.averageScore = $(table2[i]).text()) : null;
+          i === 10 ? (response.totalKills = $(table2[i]).text()) : null;
+          i === 13 ? (response.totalDeaths = $(table2[i]).text()) : null;
+          i === 16 ? (response.killsPerMatch = $(table2[i]).text()) : null;
+          i === 19 ? (response.killsPerDeath = $(table2[i]).text()) : null;
+          i === 22 ? (response.victories = $(table2[i]).text()) : null;
+          i === 25 ? (response.silverPlacements = $(table2[i]).text()) : null;
+          i === 28 ? (response.bronzePlacements = $(table2[i]).text()) : null;
+        }
+      }
+      return response;
+    }
   }
 
-  private sort(
-    $: CheerioStatic,
-    response: IFortniteStatusResponse, callback: any
-  ) {
-    $("table").map((index: number, value: any) => {
-      if ($(value).hasClass("Table")) {
-        return $(value).map((ind: number, val: any) => {
-          if (ind === 1) {
-            response.modes.all.matches = ($(val).html() as string)
-              .replace(/<small.*<\/small>/gi, "")
-              .replace("<!-- -->", "")
-              .trim();
-          } else if (ind === 2) {
-            response.modes.all.victory = ($(val).html() as string)
-              .replace(/<small.*<\/small>/gi, "")
-              .replace("<!-- -->", "")
-              .trim();
-          } else if (ind === 3) {
-            response.modes.all.silver = ($(val).html() as string)
-              .replace(/<small.*<\/small>/gi, "")
-              .replace("<!-- -->", "")
-              .trim();
-          } else if (ind === 4) {
-            response.modes.all.bronze = ($(val).html() as string)
-              .replace(/<small.*<\/small>/gi, "")
-              .replace("<!-- -->", "")
-              .trim();
-          }
-        });
-      }
-      return callback(response)
-    });
+  /**
+   * @private
+   * @hidden
+   *
+   * @returns {string} - Game Mode
+   */
+  private _getMode(i: number): string {
+    if (this._between(1, 5, i)) {
+      return "all" as keyof IFortniteStatusResponse;
+    } else if (this._between(5, 10, i)) {
+      return "solo" as keyof IFortniteStatusResponse;
+    } else if (this._between(10, 15, i)) {
+      return "duo" as keyof IFortniteStatusResponse;
+    } else if (this._between(15, 20, i)) {
+      return "squad" as keyof IFortniteStatusResponse;
+    } else {
+      return "";
+    }
+  }
+
+  /**
+   * @private
+   * @hidden
+   *
+   * @returns {boolean}  - If it is in between or not.
+   */
+  private _between(min: number, max: number, n: number): boolean {
+    if (min <= n && max > n) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
-
-const o = new FortniteClient();
-o.getStats("ionagamer").then((i) => console.log(i));
