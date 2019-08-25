@@ -1,6 +1,6 @@
 {
   "name": "gametracker.js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An wrapper to get game statistics without ny key or ratelimits",
   "main": "build/index.js",
   "repository": "https://github.com/officialpiyush/gametracker.js.git",
