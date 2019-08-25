@@ -1,6 +1,6 @@
 {
   "name": "gametracker.js",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "An wrapper to get game statistics without ny key or ratelimits",
   "main": "build/index.js",
   "repository": "https://github.com/officialpiyush/gametracker.js.git",
@@ -17,10 +17,13 @@
     "url": "https://github.com/officialpiyush/gametracker.js/issues"
   },
   "scripts": {
-    "docs": "typedoc",
+    "docs": "typedoc --excludeNotExported --mode file --out ./docs/ ./src/",
     "test": "tslint -p tsconfig.json",
     "build": "tsc"
   },
+  "files": [
+    "build/**/*"
+  ],
   "devDependencies": {
     "@types/cheerio": "^0.22.13",
     "@types/node-fetch": "^2.5.0",
@@ -31,6 +34,7 @@
     "typedoc": "*"
   },
   "dependencies": {
+    "@types/node": "^12.7.2",
     "cheerio": "^1.0.0-rc.3",
     "node-fetch": "^2.6.0"
   }
